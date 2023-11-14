@@ -1,0 +1,102 @@
+---
+title: "data cleaning examples"
+author: "YW"
+format: html
+editor: visual
+---
+```{r}
+here::i_am("lab1114.Rproj")
+library(here)
+library(vroom)
+library(dplyr)
+library(tidyr)
+```
+
+## WHO life expectancy dataset
+```{r}
+life <- vroom(here("data", "life expectancy raw.csv"))
+
+```
+
+
+
+There is apparently two subsets of the dataset.
+```{r}
+life |> distinct(IndicatorCode, Indicator)
+```
+
+
+```{r}
+life_birth <- life |>
+  filter(IndicatorCode == "WHOSIS_000001")
+
+life_60 <- life |>
+  filter(IndicatorCode == "WHOSIS_000015")
+```
+
+
+
+```{r}
+life |> count(IndicatorCode, Indicator)
+#remove redundancy by extracting information
+```
+
+
+##life expactancy at birth
+```{r}
+life_birth |> count(`Location type`)
+```
+
+```{r}
+life_birth |> count(ParentLocation, ParentLocationCode)
+```
+```{r}
+parent_codes <- life_birth |>
+  distinct(ParentLocationCode, ParentLocation)
+
+country_codes <- life_birth |> distinct(SpatialDimValueCode, Location)
+```
+
+
+
+```{r}
+#remove variables that always contain the same value
+life_birth <- life_birth |> select(-ParentLocation, -Location, -`Location type`, -Indicator, -IndicatorCode)
+```
+
+```{r}
+#use where to match the values of a variable
+life_birth |> select(where(is.numeric)) 
+```
+```{r}
+#remove columns that only have null values
+life_birth |> pull(Dim2) |> is.na() |> all() # Test column Dim2
+```
+```{r}
+x <- life_birth$Dim2
+x<- life_birth[["Dim2"]]
+x <- life_birth |> pull(Dim2)
+
+all(is.na(x))
+x |> is.na() |> all()
+```
+
+```{r}
+all_na <- function(my_var) {
+  my_var |> is.na() |> all()
+}
+```
+
+```{r}
+all_na(x)
+x |> all_na()
+```
+```{r}
+life_birth |> pull(Dim2) |> all_na()
+```
+```{r}
+# remove columns that only have null values
+life_birth |> select(!where(all_na))
+```
+
+
